@@ -9,7 +9,7 @@ This project aims to benchmark open-source ML monitoring tools. Tools in the ben
 
 ### Data source
 
-We use the [NYC taxicab data](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page), which has been migrated from a bucket of flat files to an AWS RDS instance. 
+We use the [NYC taxicab data](https://www1.nyc.gov/site/tlc/about/tlc-trip-record-data.page), which has been migrated from a bucket of flat files to an AWS RDS instance via the [TTB project](https://github.com/loglabs/ttb). 
 
 ### Feedback lag
 
