@@ -6,7 +6,6 @@ for users to monitor.
 """
 
 from abc import ABC, abstractmethod
-from hawk.dashboard import gen_dashboard
 
 import prometheus_client as prom
 
@@ -79,17 +78,6 @@ class MLMetric(ABC):
         Returns the query strings for the metrics.
         """
         pass
-
-    def generate_dashboard(self, outfile):
-        """
-        Generates a dashboard for the metrics.
-        """
-        dashboard_json = gen_dashboard(
-            self.name, self.description, self.get_query_strings()
-        )
-        # dump the dashboard to a file
-        with open(outfile, "w") as f:
-            f.write(dashboard_json)
 
 
 class BinaryClassificationMetric(MLMetric):

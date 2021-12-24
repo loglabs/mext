@@ -5,8 +5,6 @@ import string
 import time
 
 # Create a metric to track predictions.
-# pred = Gauge("prediction_float", "y_pred", labelnames=["output_id"])
-# true = Gauge("true_float", "y_true", labelnames=["output_id"])
 metric = BinaryClassificationMetric(
     "random", "Testing binary classification metric", ["output_id"]
 )

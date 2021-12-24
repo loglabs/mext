@@ -22,4 +22,4 @@ RUN pip install -e .
 EXPOSE 1000
 
 # Run the application:
-CMD ["python", "./inference/scratch.py"]
+CMD ["python", "./inference/main.py"]
