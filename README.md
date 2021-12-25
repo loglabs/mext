@@ -26,3 +26,8 @@ The ML task is to predict whether a passenger will give a taxi driver a sizeable
 Functions to log outputs and feedback to `mltrace` are used in `inference/main.py`.
 
 ## Experiments
+
+| Method      | Number of points | Logging Time | Query Time |
+| ----------- | ----------- | ----------- | ----------- |
+| `mltrace` Monitoring      | Title       | |
+| Prometheus   |         | |
