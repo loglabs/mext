@@ -86,9 +86,11 @@ def run_predictions():
 
         # Log scores
         labels = generate_labels(len(predictions))
+        outputs = predictions["prediction"].to_list()
+        feedbacks = predictions["high_tip_indicator"].astype("int").to_list()
         start = time.time()
         log_predictions(
-            predictions["prediction"].to_list(),
+            outputs,
             labels,
         )
         logging_time = (
@@ -98,7 +100,7 @@ def run_predictions():
         logging_times.append(logging_time)
 
         log_feedbacks(
-            predictions["high_tip_indicator"].astype("int").to_list(),
+            feedbacks,
             labels,
         )
 
