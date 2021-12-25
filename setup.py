@@ -14,5 +14,11 @@ setup(
     author="shreyashankar",
     author_email="shreya@cs.stanford.edu",
     packages=find_packages(exclude=["tests"]),
-    install_requires=["prometheus-client", "grafanalib"],
+    install_requires=[
+        "prometheus-client",
+        "grafanalib",
+        "mltrace",
+        "pandas",
+        "scikit-learn",
+    ],
 )
