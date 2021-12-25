@@ -29,5 +29,5 @@ Functions to log outputs and feedback to `mltrace` are used in `inference/main.p
 
 | Method      | Number of points | Logging Time | Query Time |
 | ----------- | ----------- | ----------- | ----------- |
-| `mltrace` Monitoring      | Title       | |
+| `mltrace` Monitoring      |        | |
 | Prometheus   |         | |
