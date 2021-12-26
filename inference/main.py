@@ -6,7 +6,7 @@ from components import (
 )
 from datetime import timedelta, datetime
 
-from mltrace import Task
+from mltrace import Task, Metric
 
 
 import numpy as np
@@ -15,8 +15,6 @@ import random
 import sklearn
 import string
 import time
-
-task = Task("taxi_data")
 
 
 def generate_labels(n):
@@ -30,6 +28,10 @@ def f1_score(y_true, y_pred):
     # Round y_pred to the nearest integer
     y_pred = np.round(y_pred).astype(int)
     return sklearn.metrics.f1_score(y_true, y_pred)
+
+
+task = Task("taxi_data")
+task.registerMetric(Metric("f1_score", fn=f1_score, window_size=100000))
 
 
 def log_predictions(predictions, labels):
@@ -106,7 +108,8 @@ def run_predictions():
 
         # Print rolling score
         start = time.time()
-        rolling_f1_score = task.computeMetric(f1_score)
+        # rolling_f1_score = task.computeMetric(f1_score)
+        rolling_f1_score = task.computeMetrics()
         metric_computation_time = time.time() - start
         metric_computation_times.append(metric_computation_time)
         print(f"Rolling F1 score: {rolling_f1_score}")
