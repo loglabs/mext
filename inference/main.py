@@ -5,7 +5,9 @@ from components import (
     inference,
 )
 from datetime import timedelta, datetime
+from prometheus_client import start_http_server
 
+from hawk import BinaryClassificationMetric
 from mltrace import Task, Metric
 
 
@@ -32,22 +34,34 @@ def f1_score(y_true, y_pred):
 
 task = Task("taxi_data")
 task.registerMetric(Metric("f1_score", fn=f1_score, window_size=100000))
+prom_metric = BinaryClassificationMetric(
+    "taxi_data",
+    "Binary classification metric for tip prediction",
+    ["output_id"],
+)
 
 
-def log_predictions(predictions, identifiers):
+def log_predictions_mltrace(predictions, identifiers):
     task.logOutputs(predictions, identifiers)
+
+
+def log_predictions_prometheus(predictions, identifiers):
+    prom_metric.log_pred_batch(predictions, identifiers)
 
 
 def log_feedbacks(feedback, identifiers):
     # TODO(shreyashankar): add some lag here and run this in the background
     task.logFeedbacks(feedback, identifiers)
+    prom_metric.log_true_batch(feedback, identifiers)
 
 
 def run_predictions():
     start_date = datetime(2020, 2, 1)
     end_date = datetime(2020, 5, 31)
-    logging_times = []
-    metric_computation_times = []
+    mltrace_logging_times = []
+    mltrace_metric_computation_times = []
+    prometheus_logging_times = []
+    prometheus_metric_computation_times = []
     start_dates = []
     end_dates = []
     num_points = []
@@ -86,33 +100,35 @@ def run_predictions():
         label_column = "high_tip_indicator"
         predictions, _ = inference(features_df, feature_columns, label_column)
 
-        # Log scores
+        # Log predictions and feedbacks
         identifiers = generate_labels(len(predictions))
         outputs = predictions["prediction"].to_list()
         feedbacks = predictions["high_tip_indicator"].astype("int").to_list()
         start = time.time()
-        log_predictions(
+        log_predictions_mltrace(
             outputs,
             identifiers,
         )
-        logging_time = (
-            time.time() - start
-        ) * 2  # multiply by 2 to account for log_feedbacks, which will run
+        # multiply by 2 to account for log_feedbacks, which will run
         # separately with a delay
-        logging_times.append(logging_time)
+        mltrace_logging_times.append((time.time() - start) * 2)
+        start = time.time()
+        log_predictions_prometheus(outputs, identifiers)
+        prometheus_logging_times.append((time.time() - start) * 2)
 
+        # Log feedback
         log_feedbacks(
             feedbacks,
             identifiers,
         )
 
-        # Print rolling score
+        # Print rolling score computed by mltrace
         start = time.time()
-        # rolling_f1_score = task.computeMetric(f1_score)
         rolling_f1_score = task.computeMetrics()
-        metric_computation_time = time.time() - start
-        metric_computation_times.append(metric_computation_time)
+        mltrace_metric_computation_times.append(time.time() - start)
         print(f"Rolling F1 score: {rolling_f1_score}")
+
+        # TODO (shreyashankar): add prometheus metric computation time
 
         prev_dt = curr_dt
 
@@ -122,8 +138,9 @@ def run_predictions():
         {
             "start_date": start_dates,
             "end_date": end_dates,
-            "logging_times": logging_times,
-            "metric_computation_times": metric_computation_times,
+            "mltrace_logging_times": mltrace_logging_times,
+            "mltrace_metric_computation_times": mltrace_metric_computation_times,
+            "prometheus_logging_times": prometheus_logging_times,
             "num_points": num_points,
         }
     )
@@ -132,4 +149,7 @@ def run_predictions():
 
 
 if __name__ == "__main__":
+    # Start http server for Prometheus
+    start_http_server(1000)
+
     run_predictions()
