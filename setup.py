@@ -17,7 +17,6 @@ setup(
     install_requires=[
         "prometheus-client",
         "grafanalib",
-        "mltrace",
         "pandas",
         "scikit-learn",
     ],

@@ -34,13 +34,13 @@ task = Task("taxi_data")
 task.registerMetric(Metric("f1_score", fn=f1_score, window_size=100000))
 
 
-def log_predictions(predictions, labels):
-    task.logOutputs(predictions, labels)
+def log_predictions(predictions, identifiers):
+    task.logOutputs(predictions, identifiers)
 
 
-def log_feedbacks(feedback, labels):
+def log_feedbacks(feedback, identifiers):
     # TODO(shreyashankar): add some lag here and run this in the background
-    task.logFeedbacks(feedback, labels)
+    task.logFeedbacks(feedback, identifiers)
 
 
 def run_predictions():
@@ -87,13 +87,13 @@ def run_predictions():
         predictions, _ = inference(features_df, feature_columns, label_column)
 
         # Log scores
-        labels = generate_labels(len(predictions))
+        identifiers = generate_labels(len(predictions))
         outputs = predictions["prediction"].to_list()
         feedbacks = predictions["high_tip_indicator"].astype("int").to_list()
         start = time.time()
         log_predictions(
             outputs,
-            labels,
+            identifiers,
         )
         logging_time = (
             time.time() - start
@@ -103,7 +103,7 @@ def run_predictions():
 
         log_feedbacks(
             feedbacks,
-            labels,
+            identifiers,
         )
 
         # Print rolling score
