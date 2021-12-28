@@ -8,7 +8,7 @@ from datetime import timedelta, datetime
 from prometheus_client import start_http_server
 
 from hawk import BinaryClassificationMetric
-from mltrace import Task, Metric
+from mltrace import Task, Metric, clean_db
 
 
 import numpy as np
@@ -27,20 +27,39 @@ def generate_labels(n):
     ]
 
 
-def f1_score(y_true, y_pred):
+def accuracy_score(y_true, y_pred):
     # Round y_pred to the nearest integer
     y_pred = np.round(y_pred).astype(int)
-    return sklearn.metrics.f1_score(y_true, y_pred)
+    return sklearn.metrics.accuracy_score(y_true, y_pred)
 
 
+# Clean prom DB
+result = "Service Unavailable"
+while result == "Service Unavailable":
+    time.sleep(5)
+    response = requests.post(
+        "http://example-prometheus:9090/api/v1/admin/tsdb/clean_tombstones",
+        data={},
+    )
+    result = response.text
+    print(f"Tried to delete prometheus data. Got response:{result}")
+
+# Clean mltrace db
+clean_db()
+print("MLTrace data deleted.")
+
+
+# Setup prometheus and mltrace metrics
 task = Task("taxi_data")
-task.registerMetric(Metric("f1_score", fn=f1_score, window_size=100000))
+task.registerMetric(
+    Metric("accuracy_score", fn=accuracy_score, window_size=100000)
+)
 prom_metric = BinaryClassificationMetric(
     "taxi_data",
     "Binary classification metric for tip prediction",
     ["output_id"],
 )
-print(prom_metric.get_query_strings())
+accuracy_query = prom_metric.get_query_strings()["accuracy"]
 
 
 def log_predictions_mltrace(predictions, identifiers):
@@ -59,7 +78,7 @@ def log_feedbacks(feedback, identifiers):
 
 def run_predictions():
     start_date = datetime(2020, 2, 1)
-    end_date = datetime(2020, 5, 31)
+    end_date = datetime(2020, 3, 31)
     mltrace_logging_times = []
     mltrace_metric_computation_times = []
     prometheus_logging_times = []
@@ -73,6 +92,7 @@ def run_predictions():
         curr_dt = start_date + timedelta(n)
 
         df = load_data(start_date=prev_dt, end_date=curr_dt)
+        df = df.head()
 
         clean_df = clean_data(
             df, prev_dt.strftime("%Y-%m-%d"), curr_dt.strftime("%Y-%m-%d")
@@ -126,12 +146,20 @@ def run_predictions():
 
         # Print rolling score computed by mltrace
         start = time.time()
-        rolling_f1_score = task.computeMetrics()
+        rolling_accuracy = task.computeMetrics()
         mltrace_metric_computation_times.append(time.time() - start)
-        print(f"Rolling F1 score: {rolling_f1_score}")
+        print(f"Rolling accuracy from mltrace: {rolling_accuracy}")
 
         # TODO (shreyashankar): add prometheus metric computation time
-        # response =requests.get('http://localhost:9090/api/v1/query', params={'query': 'container_cpu_user_seconds_total'})
+        start = time.time()
+        response = requests.get(
+            "http://example-prometheus:9090/api/v1/query",
+            params={
+                "query": "count(abs(taxi_data_label - on (output_id) taxi_data_prediction) < 0.5) / count(taxi_data_label - on (output_id) taxi_data_prediction)"
+            },
+        )
+        prometheus_metric_computation_times.append(time.time() - start)
+        print(f"Prometheus accuracy: {response.text}")
 
         prev_dt = curr_dt
 
@@ -144,11 +172,13 @@ def run_predictions():
             "mltrace_logging_times": mltrace_logging_times,
             "mltrace_metric_computation_times": mltrace_metric_computation_times,
             "prometheus_logging_times": prometheus_logging_times,
+            "prometheus_metric_computation_times": prometheus_metric_computation_times,
             "num_points": num_points,
         }
     )
 
     print(timing_df.head(60))
+    timing_df.to_csv("timing_df.csv", index=False)
 
 
 if __name__ == "__main__":
