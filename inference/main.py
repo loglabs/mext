@@ -14,6 +14,7 @@ from mltrace import Task, Metric
 import numpy as np
 import pandas as pd
 import random
+import requests
 import sklearn
 import string
 import time
@@ -39,6 +40,7 @@ prom_metric = BinaryClassificationMetric(
     "Binary classification metric for tip prediction",
     ["output_id"],
 )
+print(prom_metric.get_query_strings())
 
 
 def log_predictions_mltrace(predictions, identifiers):
@@ -129,6 +131,7 @@ def run_predictions():
         print(f"Rolling F1 score: {rolling_f1_score}")
 
         # TODO (shreyashankar): add prometheus metric computation time
+        # response =requests.get('http://localhost:9090/api/v1/query', params={'query': 'container_cpu_user_seconds_total'})
 
         prev_dt = curr_dt
 
@@ -151,5 +154,7 @@ def run_predictions():
 if __name__ == "__main__":
     # Start http server for Prometheus
     start_http_server(1000)
+
+    print("Starting inference.")
 
     run_predictions()

@@ -13,7 +13,7 @@ services:
       - '--web.enable-admin-api'
       - '--web.enable-lifecycle'
     networks:
-      example-network:
+      services-network:
         aliases:
           - example-prometheus
 
@@ -26,12 +26,16 @@ services:
     environment:
       PYTHONPATH: /src
       DEBUG_METRICS: "false"
+      DB_URI: "postgresql://admin:admin@database:5432/sqlalchemy"
+      DOCKER_DEFAULT_PLATFORM: "linux/amd64"
+    env_file:
+      - ./.env
     volumes:
       - .:/src
     ports:
       - 1000:10000
     networks:
-      example-network:
+      services-network:
         aliases:
           - app
 
@@ -49,11 +53,11 @@ services:
     env_file:
       - ./monitoring/config.monitoring
     networks:
-      example-network:
+      services-network:
         aliases:
           - example-grafana
 
 networks:
-  example-network:
-    name: example-network
+  services-network:
+    name: services-network
     driver: bridge
