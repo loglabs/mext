@@ -20,7 +20,9 @@ RUN pip install numpy
 RUN pip install pandas
 RUN pip install git+https://github.com/loglabs/mltrace.git@master
 RUN pip install git+https://github.com/loglabs/ttb.git@main
-RUN pip install psycopg2-binary
+RUN apt-get update \
+    && apt-get -y install libpq-dev gcc \
+    && pip install psycopg2
 RUN pip install -e .
 
 # Set credentials

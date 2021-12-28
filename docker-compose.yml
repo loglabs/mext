@@ -27,13 +27,16 @@ services:
       PYTHONPATH: /src
       DEBUG_METRICS: "false"
       DB_URI: "postgresql://admin:admin@database:5432/sqlalchemy"
-      DOCKER_DEFAULT_PLATFORM: "linux/amd64"
     env_file:
       - ./.env
     volumes:
       - .:/src
     ports:
       - 1000:10000
+    deploy:
+      resources:
+        limits:
+          memory: 4G
     networks:
       services-network:
         aliases:
