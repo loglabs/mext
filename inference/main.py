@@ -5,6 +5,7 @@ from components import (
     inference,
 )
 from datetime import timedelta, datetime
+from multiprocessing import Process
 from prometheus_client import start_http_server
 
 from hawk import BinaryClassificationMetric
@@ -34,15 +35,15 @@ def accuracy_score(y_true, y_pred):
 
 
 # Clean prom DB
-result = "Service Unavailable"
-while result == "Service Unavailable":
-    time.sleep(5)
-    response = requests.post(
-        "http://example-prometheus:9090/api/v1/admin/tsdb/clean_tombstones",
-        data={},
-    )
-    result = response.text
-    print(f"Tried to delete prometheus data. Got response:{result}")
+# result = "Service Unavailable"
+# while result == "Service Unavailable":
+#     time.sleep(5)
+#     response = requests.post(
+#         "http://example-prometheus:9090/api/v1/admin/tsdb/clean_tombstones",
+#         data={},
+#     )
+#     result = response.text
+#     print(f"Tried to delete prometheus data. Got response:{result}")
 
 # Clean mltrace db
 clean_db()
@@ -51,9 +52,7 @@ print("MLTrace data deleted.")
 
 # Setup prometheus and mltrace metrics
 task = Task("taxi_data")
-task.registerMetric(
-    Metric("accuracy_score", fn=accuracy_score, window_size=100000)
-)
+task.registerMetric(Metric("accuracy_score", fn=accuracy_score))
 prom_metric = BinaryClassificationMetric(
     "taxi_data",
     "Binary classification metric for tip prediction",
@@ -70,15 +69,20 @@ def log_predictions_prometheus(predictions, identifiers):
     prom_metric.log_pred_batch(predictions, identifiers)
 
 
-def log_feedbacks(feedback, identifiers):
+def log_feedbacks(feedback, identifiers, start_date, end_date):
     # TODO(shreyashankar): add some lag here and run this in the background
+    # sleep_time = np.random.normal(loc=3, scale=1, size=1)[0]
+    # time.sleep(sleep_time)
     task.logFeedbacks(feedback, identifiers)
     prom_metric.log_true_batch(feedback, identifiers)
+    print(
+        f"Logged feedback for {len(feedback)} points in the range {start_date} to {end_date}"
+    )
 
 
 def run_predictions():
-    start_date = datetime(2020, 2, 1)
-    end_date = datetime(2020, 3, 31)
+    start_date = datetime(2020, 3, 1)
+    end_date = datetime(2020, 5, 31)
     mltrace_logging_times = []
     mltrace_metric_computation_times = []
     prometheus_logging_times = []
@@ -86,13 +90,14 @@ def run_predictions():
     start_dates = []
     end_dates = []
     num_points = []
+    processes = []
 
     prev_dt = start_date
     for n in range(2, int((end_date - start_date).days) + 1, 2):
         curr_dt = start_date + timedelta(n)
 
         df = load_data(start_date=prev_dt, end_date=curr_dt)
-        df = df.head()
+        df = df.head(10000)
 
         clean_df = clean_data(
             df, prev_dt.strftime("%Y-%m-%d"), curr_dt.strftime("%Y-%m-%d")
@@ -121,6 +126,7 @@ def run_predictions():
         ]
         label_column = "high_tip_indicator"
         predictions, _ = inference(features_df, feature_columns, label_column)
+        print("Finished predictions.")
 
         # Log predictions and feedbacks
         identifiers = generate_labels(len(predictions))
@@ -137,12 +143,18 @@ def run_predictions():
         start = time.time()
         log_predictions_prometheus(outputs, identifiers)
         prometheus_logging_times.append((time.time() - start) * 2)
+        print(
+            f"Logged predictions for {len(outputs)} points in the range {prev_dt} to {curr_dt}"
+        )
 
         # Log feedback
-        log_feedbacks(
-            feedbacks,
-            identifiers,
-        )
+        # p = Process(
+        #     target=log_feedbacks,
+        #     args=(feedbacks, identifiers, prev_dt, curr_dt),
+        # )
+        # p.start()
+        # processes.append(p)
+        log_feedbacks(feedbacks, identifiers, prev_dt, curr_dt)
 
         # Print rolling score computed by mltrace
         start = time.time()
@@ -154,9 +166,7 @@ def run_predictions():
         start = time.time()
         response = requests.get(
             "http://example-prometheus:9090/api/v1/query",
-            params={
-                "query": "count(abs(taxi_data_label - on (output_id) taxi_data_prediction) < 0.5) / count(taxi_data_label - on (output_id) taxi_data_prediction)"
-            },
+            params={"query": accuracy_query},
         )
         prometheus_metric_computation_times.append(time.time() - start)
         print(f"Prometheus accuracy: {response.text}")
@@ -164,6 +174,10 @@ def run_predictions():
         prev_dt = curr_dt
 
     print("Exited loop of inference.")
+
+    # Wait for all threads to finish
+    # for p in processes:
+    #     p.join()
 
     timing_df = pd.DataFrame(
         {
