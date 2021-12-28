@@ -7,8 +7,9 @@ This project aims to benchmark open-source ML monitoring tools. Tools in the ben
 
 ## TODOs
 
-- [ ] Victoria Metrics baseline
 - [ ] Run several trials of experiment & make plots
+- [ ] Simulate lag
+- [ ] Victoria Metrics baseline (optional)
 - [ ] Clean up code
 
 ## ML Task and Pipeline Architecture
