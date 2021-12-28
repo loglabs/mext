@@ -85,6 +85,7 @@ def run_predictions():
     end_date = datetime(2020, 5, 31)
     mltrace_logging_times = []
     mltrace_metric_computation_times = []
+    postgres_metric_computation_times = []
     prometheus_logging_times = []
     prometheus_metric_computation_times = []
     start_dates = []
@@ -156,12 +157,6 @@ def run_predictions():
         # processes.append(p)
         log_feedbacks(feedbacks, identifiers, prev_dt, curr_dt)
 
-        # Print rolling score computed by mltrace
-        start = time.time()
-        rolling_accuracy = task.computeMetrics()
-        mltrace_metric_computation_times.append(time.time() - start)
-        print(f"Rolling accuracy from mltrace: {rolling_accuracy}")
-
         # TODO (shreyashankar): add prometheus metric computation time
         start = time.time()
         response = requests.get(
@@ -170,6 +165,18 @@ def run_predictions():
         )
         prometheus_metric_computation_times.append(time.time() - start)
         print(f"Prometheus accuracy: {response.text}")
+
+        # Postgres metric computation time
+        start = time.time()
+        rolling_accuracy = task.computeMetric(accuracy_score)
+        postgres_metric_computation_times.append(time.time() - start)
+        print(f"Rolling accuracy from postgres: {rolling_accuracy}")
+
+        # Print rolling score computed by mltrace
+        start = time.time()
+        rolling_accuracy = task.computeMetrics()
+        mltrace_metric_computation_times.append(time.time() - start)
+        print(f"Rolling accuracy from mltrace: {rolling_accuracy}")
 
         prev_dt = curr_dt
 
@@ -187,6 +194,7 @@ def run_predictions():
             "mltrace_metric_computation_times": mltrace_metric_computation_times,
             "prometheus_logging_times": prometheus_logging_times,
             "prometheus_metric_computation_times": prometheus_metric_computation_times,
+            "postgres_metric_computation_times": postgres_metric_computation_times,
             "num_points": num_points,
         }
     )
