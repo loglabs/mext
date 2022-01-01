@@ -1,15 +1,11 @@
-# hawk
+# The Modern ML Monitoring Mess: Failure Modes in Extending Prometheus
 
-This project aims to benchmark open-source ML monitoring tools. Tools in the benchmark include:
+*Accompanying blog post [here]()*.
+
+This WIP project aims to benchmark open-source ML monitoring tools. Tools in the benchmark include:
 
 * Prometheus
-* `mltrace` Monitoring
-
-## TODOs
-
-- [ ] Run several trials of experiment & make plots
-- [x] Naive postgres baseline
-- [ ] Clean up code
+<!-- * `mltrace` Monitoring -->
 
 ## ML Task and Pipeline Architecture
 
@@ -27,13 +23,15 @@ The ML task is to predict whether a passenger will give a taxi driver a sizeable
 
 ## Prometheus Extension
 
-## `mltrace` Monitoring Extension
+We use 2 Gauge Metrics -- one for outputs, and one for feedback -- and aggregate them in PromQL to compute accuracy. These Metrics are defined in `lib/prometheus_ml_ext.py`. Read the accompanying blog post for more details.
 
-Functions to log outputs and feedback to `mltrace` are used in `inference/main.py`.
+<!-- ## `mltrace` Monitoring Extension (TODO)
 
-## Experiments
+Functions to log outputs and feedback to `mltrace` are used in `inference/main.py`. -->
+
+<!-- ## Experiments (TODO)
 
 | Method      | Number of points | Logging Time | Query Time |
 | ----------- | ----------- | ----------- | ----------- |
 | `mltrace` Monitoring      |        | |
-| Prometheus   |         | |
+| Prometheus   |         | | -->
