@@ -30,7 +30,7 @@ class MLMetric(ABC):
         else:
             metric.labels(keys).set(value)
 
-    def log_batch(self, metric, values, keys):
+    def logBatch(self, metric, values, keys):
         """
         Logs a batch of metrics to Prometheus.
         """
@@ -45,28 +45,28 @@ class MLMetric(ABC):
         pass
 
     @abstractmethod
-    def log_pred(self, pred, keys):
+    def logOutput(self, pred, keys):
         """
         Logs a prediction.
         """
         pass
 
     @abstractmethod
-    def log_pred_batch(self, preds, keys):
+    def logOutputs(self, preds, keys):
         """
         Logs a batch of predictions.
         """
         pass
 
     @abstractmethod
-    def log_true(self, true, keys):
+    def logFeedback(self, true, keys):
         """
         Logs true label.
         """
         pass
 
     @abstractmethod
-    def log_true_batch(self, trues, keys):
+    def logFeedbacks(self, trues, keys):
         """
         Logs a batch of true labels.
         """
@@ -101,11 +101,11 @@ class BinaryClassificationMetric(MLMetric):
             labelnames=self.keys,
         )
 
-    def log_pred(self, pred, keys):
+    def logOutput(self, pred, keys):
         self.log(self.pred_metric, pred, keys)
 
-    def log_pred_batch(self, preds, keys):
-        self.log_batch(self.pred_metric, preds, keys)
+    def logOutputs(self, preds, keys):
+        self.logBatch(self.pred_metric, preds, keys)
 
     def _check_label_validity(self, label):
         """
@@ -115,14 +115,14 @@ class BinaryClassificationMetric(MLMetric):
         """
         return label == 0 or label == 1
 
-    def log_true(self, true, keys):
+    def logFeedback(self, true, keys):
         assert self._check_label_validity(true), "Label must be 0 or 1."
         self.log(self.label_metric, true, keys)
 
-    def log_true_batch(self, trues, keys):
+    def logFeedbacks(self, trues, keys):
         for true in trues:
             assert self._check_label_validity(true), "Label must be 0 or 1."
-        self.log_batch(self.label_metric, trues, keys)
+        self.logBatch(self.label_metric, trues, keys)
 
     def get_query_strings(self):
         """

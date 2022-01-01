@@ -8,7 +8,7 @@ from datetime import timedelta, datetime
 from multiprocessing import Process
 from prometheus_client import start_http_server
 
-from hawk import BinaryClassificationMetric
+from promext import BinaryClassificationMetric
 from mltrace import Task, Metric, clean_db
 
 
@@ -66,7 +66,7 @@ def log_predictions_mltrace(predictions, identifiers):
 
 
 def log_predictions_prometheus(predictions, identifiers):
-    prom_metric.log_pred_batch(predictions, identifiers)
+    prom_metric.logOutputs(predictions, identifiers)
 
 
 def log_feedbacks(feedback, identifiers, start_date, end_date):
@@ -74,7 +74,7 @@ def log_feedbacks(feedback, identifiers, start_date, end_date):
     # sleep_time = np.random.normal(loc=3, scale=1, size=1)[0]
     # time.sleep(sleep_time)
     task.logFeedbacks(feedback, identifiers)
-    prom_metric.log_true_batch(feedback, identifiers)
+    prom_metric.logFeedbacks(feedback, identifiers)
     print(
         f"Logged feedback for {len(feedback)} points in the range {start_date} to {end_date}"
     )
