@@ -6,7 +6,7 @@ HERE = pathlib.Path(__file__).parent
 README = (HERE / "README.md").read_text()
 
 setup(
-    name="mlext",
+    name="mext",
     version="0.1",
     description="ML metrics experiments for Prometheus",
     long_description=README,

@@ -1,8 +1,8 @@
 # The Modern ML Monitoring Mess: Failure Modes in Extending Prometheus
 
-*Accompanying blog post [here]()*.
+*Accompanying blog post [here](https://www.shreya-shankar.com/rethinking-ml-monitoring-3/)*.
 
-This WIP project aims to benchmark open-source ML monitoring tools. Tools in the benchmark include:
+This WIP project (**M**onitoring **Ext**ension) aims to benchmark open-source ML monitoring tools. Tools in the benchmark include:
 
 * Prometheus
 <!-- * `mltrace` Monitoring -->
