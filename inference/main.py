@@ -8,7 +8,7 @@ from datetime import timedelta, datetime
 from multiprocessing import Process
 from prometheus_client import start_http_server
 
-from promext import BinaryClassificationMetric
+from mext import BinaryClassificationMetric
 from mltrace import Task, Metric, clean_db
 
 
@@ -35,6 +35,15 @@ def accuracy_score(y_true, y_pred):
 
 
 # Clean prom DB
+time.sleep(5)
+response = requests.post(
+    "http://example-prometheus:9090/api/v1/admin/tsdb/clean_tombstones",
+    data={},
+)
+result = response.text
+print(f"Tried to delete prometheus data. Got response:{result}")
+
+
 # result = "Service Unavailable"
 # while result == "Service Unavailable":
 #     time.sleep(5)
